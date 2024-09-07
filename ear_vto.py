@@ -8,12 +8,17 @@ from typing import List, Dict
 import time
 from dotenv import load_dotenv
 import os
+from pathlib import Path
+
+# Get the current working directory
+dir = Path(os.getcwd())
 
 # Load environment variables from .env file
-load_dotenv()
+ENV_PATH = dir / '.env'
+load_dotenv(ENV_PATH)
 
 # Get API URL from environment variables
-API_URL = os.environ["API_URL"] # type: ignore
+API_URL = os.environ["API_URL"]
 
 st.title('Earring Virtual Try On')
 
@@ -48,18 +53,31 @@ else:
     # Display selected earring
     st.image(obj, caption="Selected Earring", width=200)
 
-    # Streamlit widget to capture an image
-    captured_image = st.camera_input("Capture an image of the ear")
+    # Provide options to either upload or capture an image
+    option = st.radio("Choose Image Source", ("Capture Image", "Upload Image"))
 
-    if captured_image is not None:
-        # Save the captured file temporarily
-        with open("temp_image_cam.jpg", "wb") as f:
-            f.write(captured_image.getvalue())
+    if option == "Capture Image":
+        # Streamlit widget to capture an image using the webcam
+        camera_image = st.camera_input("Capture an image of the wrist")
+        if camera_image is not None:
+            with open(dir / "temp_image_cam.jpg", "wb") as f:
+                f.write(camera_image.getbuffer())
+            img_path = str(dir / 'temp_image_cam.jpg')
 
+    elif option == "Upload Image":
+        # Streamlit widget to upload an image
+        uploaded_image = st.file_uploader("Upload an image of the wrist", type=["jpg", "jpeg", "png"])
+        if uploaded_image is not None:
+            with open(dir / "temp_image.jpg", "wb") as f:
+                f.write(uploaded_image.getbuffer())
+            img_path = str(dir / 'temp_image.jpg')
+
+    # Proceed if either a camera or uploaded image is available
+    if (option == "Capture Image" and camera_image) or (option == "Upload Image" and uploaded_image):
         start = time.time()
         # Prepare the file for the request
         files = [
-            ('image', ('temp_image_cam.jpg', open('temp_image_cam.jpg', 'rb'), 'image/jpeg'))
+            ('image', (img_path, open(img_path, 'rb'), 'image/jpeg'))
         ]
 
         payload = {'isEar': 'true', 'isNeck': 'false'}
@@ -73,7 +91,7 @@ else:
         results = response.text
 
         # Load and display the uploaded image
-        img = cv2.imread('temp_image_cam.jpg')
+        img = cv2.imread(img_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Print the response for debugging
