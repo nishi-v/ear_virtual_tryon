@@ -19,6 +19,7 @@ load_dotenv(ENV_PATH)
 
 # Get API URL from environment variables
 API_URL = os.environ["API_URL"]
+BEARER_TOKEN = os.environ["BEARER_TOKEN"]
 
 st.title('Earring Virtual Try On')
 
@@ -51,7 +52,7 @@ else:
     obj = st.session_state.object
     
     # Display selected earring
-    st.image(obj, caption="Selected Earring", width=200)
+    st.image(obj, caption="Selected Earring", width=100)
 
     # Provide options to either upload or capture an image
     option = st.radio("Choose Image Source", ("Capture Image", "Upload Image"))
@@ -81,7 +82,9 @@ else:
         ]
 
         payload = {'isEar': 'true', 'isNeck': 'false'}
-        headers = {}
+        headers = {
+            'Authorization': f"Bearer {BEARER_TOKEN}"
+        }
 
         # Make the request
         response = requests.request("POST", API_URL, headers=headers, data=payload, files=files, verify=False)
