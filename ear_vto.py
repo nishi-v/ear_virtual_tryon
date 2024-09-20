@@ -126,8 +126,17 @@ else:
                 st.error("Invalid format for 'ear_coordinates' in API response.")
 
         except json.JSONDecodeError:
+            st.write("Error decoding JSON. Here's the response text:")
+            st.write(results)  # Display raw response text
             st.error("Failed to decode JSON from the API response.")
-
+            st.stop()
+        except KeyError:
+            st.write("Error: Expected data format is not present in the response.")
+            st.write("Here's the response text:")
+            st.write(results)  # Display raw response text
+            st.error("Failed to find expected 'wrist' data in the API response.")
+            st.stop()
+            
         # Display the image
         st.image(img, width=200)
 
